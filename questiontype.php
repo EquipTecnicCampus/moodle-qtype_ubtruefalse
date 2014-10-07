@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/questionlib.php');
-
+require_once($CFG->dirroot . '/question/format/xml/format.php');
 
 /**
  * The true-false question type class.
@@ -147,6 +147,76 @@ class qtype_ubtruefalse extends question_type {
                 $answers[$questiondata->options->falseanswer]->feedbackformat;
         $question->trueanswerid =  $questiondata->options->trueanswer;
         $question->falseanswerid = $questiondata->options->falseanswer;
+    }
+
+    public function export_to_xml($question, qformat_xml $format, $extra = null) {
+        $output = '';
+
+        $trueanswer = $question->options->answers[$question->options->trueanswer];
+        $trueanswer->answer = 'true';
+        $output .= $format->write_answer($trueanswer);
+
+        $falseanswer = $question->options->answers[$question->options->falseanswer];
+        $falseanswer->answer = 'false';
+        $output .= $format->write_answer($falseanswer);
+
+        return $output;
+    }
+
+     public function import_from_xml($data, $question, qformat_xml $format, $extra=null) {
+        if (!isset($data['@']['type']) || $data['@']['type'] != 'ubtruefalse') {
+            return false;
+        }
+
+        $question = $format->import_headers($data);
+
+        // 'header' parts particular to ubtrue/ubfalse
+        $question->qtype = 'ubtruefalse';
+
+        // In the past, it used to be assumed that the two answers were in the file
+        // true first, then false. Howevever that was not always true. Now, we
+        // try to match on the answer text, but in old exports, this will be a localised
+        // string, so if we don't find true or false, we fall back to the old system.
+        $first = true;
+        $warning = false;
+        foreach ($data['#']['answer'] as $answer) {
+            $answertext = $format->getpath($answer,
+                    array('#', 'text', 0, '#'), '', true);
+            $feedback = $format->import_text_with_files($answer,
+                    array('#', 'feedback', 0), '', $format->get_format($question->questiontextformat));
+
+            if ($answertext != 'true' && $answertext != 'false') {
+                // Old style file, assume order is true/false.
+                $warning = true;
+                if ($first) {
+                    $answertext = 'true';
+                } else {
+                    $answertext = 'false';
+                }
+            }
+
+            if ($answertext == 'true') {
+                $question->answer = ($answer['@']['fraction'] == 100);
+                $question->correctanswer = $question->answer;
+                $question->feedbacktrue = $feedback;
+            } else {
+                $question->answer = ($answer['@']['fraction'] != 100);
+                $question->correctanswer = $question->answer;
+                $question->feedbackfalse = $feedback;
+            }
+            $first = false;
+        }
+
+        if ($warning) {
+            $a = new stdClass();
+            $a->questiontext = $question->questiontext;
+            $a->answer = get_string($question->correctanswer ? 'true' : 'false', 'qtype_ubtruefalse');
+            echo $OUTPUT->notification(get_string('truefalseimporterror', 'qformat_xml', $a));
+        }
+
+        $format->import_hints($question, $data, false, false, $format->get_format($question->questiontextformat));
+
+        return $question;
     }
 
     public function delete_question($questionid, $contextid) {

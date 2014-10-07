@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -22,10 +23,7 @@
  * @copyright  2009 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-
 defined('MOODLE_INTERNAL') || die();
-
 
 /**
  * Generates the output for true-false questions.
@@ -34,11 +32,11 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class qtype_ubtruefalse_renderer extends qtype_renderer {
-    public function formulation_and_controls(question_attempt $qa,
-            question_display_options $options) {
 
-        global $PAGE,$CFG,$valor;
-        
+    public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
+
+        global $PAGE, $CFG, $valor;
+
         $question = $qa->get_question();
         $response = $qa->get_last_qt_var('answer', '');
 
@@ -59,18 +57,18 @@ class qtype_ubtruefalse_renderer extends qtype_renderer {
             'type' => 'radio',
             'name' => $inputname,
             'value' => 2,
-            'id' => $inputname.'_hiden',            
+            'id' => $inputname . '_hiden',
         );
         $buttonclearattributes = array(
-            'type'=>'button', 
-            'name'=>$inputname,
-            'id'=>$inputname,
-            'onclick' =>"blankresponse('$inputname')",
+            'type' => 'button',
+            'name' => $inputname,
+            'id' => $inputname,
+            'onclick' => "blankresponse('$inputname')",
         );
 
         if ($options->readonly) {
             $trueattributes['disabled'] = 'disabled';
-            $falseattributes['disabled'] = 'disabled';           
+            $falseattributes['disabled'] = 'disabled';
             $buttonclearattributes['disabled'] = 'disabled';
         }
 
@@ -78,18 +76,23 @@ class qtype_ubtruefalse_renderer extends qtype_renderer {
         $truechecked = false;
         $falsechecked = false;
         $responsearray = array();
-        
-        if ($response == 1) {
-            $trueattributes['checked'] = 'checked';
-            $truechecked = true;
-            $responsearray = array('answer' => 1);
-        } else if ($response == 0 && $response !== '') {//else if ($response !== '')            
-            $falseattributes['checked'] = 'checked';            
-            $falsechecked = true;
-            $responsearray = array('answer' => 1);
-        } else {            
+
+        if ($qa->get_step($qa->get_num_steps() - 1)->get_state() != 'todo' && $qa->get_step($qa->get_num_steps() - 1)->get_state() != 'gaveup') {
+            if ($response == 1) {
+                $trueattributes['checked'] = 'checked';
+                $truechecked = true;
+                $responsearray = array('answer' => 1);
+            } else if ($response == 0 && $response !== '') {//else if ($response !== '')
+                $falseattributes['checked'] = 'checked';
+                $falsechecked = true;
+                $responsearray = array('answer' => 1);
+            } else {
+                $truechecked = false;
+                $falsechecked = false;
+            }
+        } else {
             $truechecked = false;
-            $falsechecked = false;            
+            $falsechecked = false;
         }
 
         // Work out visual feedback for answer correctness.
@@ -108,57 +111,44 @@ class qtype_ubtruefalse_renderer extends qtype_renderer {
         }
 
         $radiotrue = html_writer::empty_tag('input', $trueattributes) .
-                html_writer::tag('label', get_string('true', 'qtype_ubtruefalse'),
-                array('for' => $trueattributes['id']));
+                html_writer::tag('label', get_string('true', 'qtype_ubtruefalse'), array('for' => $trueattributes['id']));
         $radiofalse = html_writer::empty_tag('input', $falseattributes) .
-                html_writer::tag('label', get_string('false', 'qtype_ubtruefalse'),
-                array('for' => $falseattributes['id']));
-       
-        
+                html_writer::tag('label', get_string('false', 'qtype_ubtruefalse'), array('for' => $falseattributes['id']));
+
+
         $result = '';
-        $result .= html_writer::tag('div', $question->format_questiontext($qa),
-                array('class' => 'qtext'));
+        $result .= html_writer::tag('div', $question->format_questiontext($qa), array('class' => 'qtext'));
 
         $result .= html_writer::start_tag('div', array('class' => 'ablock'));
-        $result .= html_writer::tag('div', get_string('selectone', 'qtype_ubtruefalse'),
-                array('class' => 'prompt'));
+        $result .= html_writer::tag('div', get_string('selectone', 'qtype_ubtruefalse'), array('class' => 'prompt'));
 
         $result .= html_writer::start_tag('div', array('class' => 'answer'));
-        $result .= html_writer::tag('div', $radiotrue . ' ' . $truefeedbackimg,
-                array('class' => 'r0' . $trueclass));
-        
-        $result .= html_writer::tag('div', $radiofalse . ' ' . $falsefeedbackimg,
-                array('class' => 'r1' . $falseclass));
+        $result .= html_writer::tag('div', $radiotrue . ' ' . $truefeedbackimg, array('class' => 'r0' . $trueclass));
 
-        
+        $result .= html_writer::tag('div', $radiofalse . ' ' . $falsefeedbackimg, array('class' => 'r1' . $falseclass));
+
+
         /*
          * UB
-         * Modificación, ponemos en blanco radiobuttons 
+         * Modificación, ponemos en blanco radiobuttons
          * Javier Flaqué - 14/03/2013
-         */ 
-        
-        $result .= html_writer::start_tag('div', array('style' => 'display:none'));                
-        $result .= html_writer::start_tag('input',$emptyattributes);               
-        $result .= html_writer::end_tag('input');        
-        $result .= html_writer::end_tag('div');
-                
-        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/ubtruefalse/emptyRadio.js'));        
+         */
+
+        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/ubtruefalse/emptyRadio.js'));
         $result .= html_writer::end_tag('br');
-        $result .= html_writer::start_tag('button',$buttonclearattributes);        
+        $result .= html_writer::start_tag('button', $buttonclearattributes);
         $result .= get_string('noresponse', 'quiz');
         $result .= html_writer::end_tag('button');
-        
+
         /* Fin modificación */
-        
-        
+
+
         $result .= html_writer::end_tag('div'); // answer
 
         $result .= html_writer::end_tag('div'); // ablock
 
         if ($qa->get_state() == question_state::$invalid) {
-            $result .= html_writer::nonempty_tag('div',
-                    $question->get_validation_error($responsearray),
-                    array('class' => 'validationerror'));
+            $result .= html_writer::nonempty_tag('div', $question->get_validation_error($responsearray), array('class' => 'validationerror'));
         }
 
         return $result;
@@ -169,11 +159,9 @@ class qtype_ubtruefalse_renderer extends qtype_renderer {
         $response = $qa->get_last_qt_var('answer', '');
 
         if ($response) {
-            return $question->format_text($question->truefeedback, $question->truefeedbackformat,
-                    $qa, 'question', 'answerfeedback', $question->trueanswerid);
+            return $question->format_text($question->truefeedback, $question->truefeedbackformat, $qa, 'question', 'answerfeedback', $question->trueanswerid);
         } else if ($response !== '') {
-            return $question->format_text($question->falsefeedback, $question->falsefeedbackformat,
-                    $qa, 'question', 'answerfeedback', $question->falseanswerid);
+            return $question->format_text($question->falsefeedback, $question->falsefeedbackformat, $qa, 'question', 'answerfeedback', $question->falseanswerid);
         }
     }
 
@@ -186,8 +174,5 @@ class qtype_ubtruefalse_renderer extends qtype_renderer {
             return get_string('correctanswerfalse', 'qtype_ubtruefalse');
         }
     }
-    
-    public function response_ajax(){
-       
-    }
+
 }

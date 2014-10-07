@@ -114,6 +114,6 @@ class qtype_ubtruefalse_edit_form extends question_edit_form {
     }
 
     public function qtype() {
-        return 'truefalse';
+        return 'ubtruefalse';
     }
 }
